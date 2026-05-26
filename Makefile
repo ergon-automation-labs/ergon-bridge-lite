@@ -1,31 +1,60 @@
-.PHONY: help build test test-full format release docker-build clean
+.PHONY: help build test test-full format release publish-release push-and-publish docker-build clean version
 
 BOT_NAME := bridge_lite
-APP_NAME := bot_army_bridge_lite
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 build: ## Compile the project
-	cd $(APP_NAME) && mix deps.get && mix compile
+	mix deps.get && mix compile
 
 test: ## Run unit tests (excludes integration)
-	cd $(APP_NAME) && mix test --exclude integration
+	mix test --exclude integration
 
 test-full: ## Run all tests including integration
-	cd $(APP_NAME) && mix test --include integration --trace
+	mix test --include integration --trace
 
 format: ## Format code
-	cd $(APP_NAME) && mix format
+	mix format
 
 release: ## Build OTP release
-	cd $(APP_NAME) && MIX_ENV=prod mix release --overwrite
+	MIX_ENV=prod mix release --overwrite
 
-docker-build: ## Build Docker image (run from monorepo root)
-	docker build -t ergon-automation-labs/$(BOT_NAME):latest -f $(APP_NAME)/Dockerfile .
+publish-release: release ## Build, package, and publish to GitHub
+	@echo "==============================================="
+	@echo "Publishing release to GitHub"
+	@echo "==============================================="
+	@echo ""
+	@set -e; \
+	VERSION=$$(sed -n 's/^[[:space:]]*version:[[:space:]]*"\([^"]*\)".*/\1/p' mix.exs | head -n 1); \
+	if [ -z "$$VERSION" ]; then \
+		echo "Failed to resolve version from mix.exs"; \
+		exit 1; \
+	fi; \
+	TARBALL=$(BOT_NAME)-$$VERSION.tar.gz; \
+	echo "Version: $$VERSION"; \
+	echo "Creating release tarball..."; \
+	tar -czf "$$TARBALL" -C _build/prod/rel $(BOT_NAME)/; \
+	echo "✓ Tarball created: $$TARBALL"; \
+	echo ""; \
+	echo "Creating GitHub release v$$VERSION..."; \
+	if gh release view "v$$VERSION" >/dev/null 2>&1; then \
+		gh release upload "v$$VERSION" "$$TARBALL" --clobber; \
+	else \
+		gh release create "v$$VERSION" "$$TARBALL" --title "v$$VERSION" --notes "Release v$$VERSION"; \
+	fi; \
+	echo ""; \
+	echo "✓ Published v$$VERSION"; \
+	rm -f "$$TARBALL"
+
+push-and-publish: ## Push then publish release asset
+	git push && $(MAKE) publish-release
+
+docker-build: ## Build Docker image
+	docker build -t ergon-automation-labs/$(BOT_NAME):latest .
 
 clean: ## Clean build artifacts
-	cd $(APP_NAME) && mix clean && rm -rf _build deps
+	mix clean && rm -rf _build deps
 
 version: ## Show current version
-	cd $(APP_NAME) && mix run -e "IO.puts Mix.Project.config()[:version]"
+	mix run -e "IO.puts Mix.Project.config()[:version]"

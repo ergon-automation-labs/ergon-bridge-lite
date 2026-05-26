@@ -1,37 +1,22 @@
-# Build stage
-FROM hexpm/elixir:1.16.2-erlang-26.2.5-alpine-3.20.1 AS builder
-
-RUN apk add --no-cache build-base git
+FROM ergon-automation-labs/ergon-builder:1.0.0 as builder
 
 WORKDIR /app
+RUN apk add --no-cache build-base git elixir
+COPY mix.exs mix.lock ./
+RUN mix local.hex --force && mix local.rebar --force && mix deps.get --only prod
 
-# Copy shared libraries first (for better layer caching)
-COPY bot_army_library_core ./bot_army_library_core/
-COPY bot_army_library_runtime ./bot_army_library_runtime/
+COPY . .
+RUN mix compile --prod && mix release
 
-# Copy app
-COPY bot_army_bridge_lite ./bot_army_bridge_lite/
+# Runtime
+FROM ergon-automation-labs/ergon-builder:base
 
-WORKDIR /app/bot_army_bridge_lite
-
-ENV MIX_ENV=prod
-
-RUN mix local.hex --force && \
-    mix local.rebar --force && \
-    mix deps.get --only prod && \
-    mix release --overwrite
-
-# Runtime stage
-FROM alpine:3.20 AS runtime
-
-RUN apk add --no-cache openssl ncurses-libs libstdc++
-
-WORKDIR /app
-COPY --from=builder /app/bot_army_bridge_lite/_build/prod/rel/bridge_lite ./
+COPY --from=builder /app/_build/prod/rel/bridge_lite /app/bin/
 
 ENV MIX_ENV=prod
 ENV NATS_SERVERS=nats://nats:4222
 
-EXPOSE 9090
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8888/health || exit 1
 
 CMD ["bridge_lite", "start"]

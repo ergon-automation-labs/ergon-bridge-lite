@@ -24,3 +24,7 @@ bot_army_bridge_lite-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Build artifacts
+*.tar.gz
+*.tar.xz

@@ -1,5 +1,7 @@
 import Config
 
+config :bot_army_bridge_lite, :deployment_status, "experimental"
+
 config :bot_army_bridge_lite,
   bridge_subjects: [
     "bridge.task.create",

@@ -20,8 +20,7 @@ config :bot_army_library_runtime, :nats, servers: [{"localhost", 4223}]
 
 config :logger,
   level: :info,
-  backends: [:console],
-  default_formatter: {BotArmyRuntime.LoggerFormatter, []}
+  backends: [:console]
 
 config :logger, :console,
   format: {BotArmyRuntime.LoggerFormatter, []},

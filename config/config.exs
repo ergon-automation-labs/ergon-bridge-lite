@@ -18,12 +18,11 @@ config :bot_army_bridge_lite,
 
 config :bot_army_library_runtime, :nats, servers: [{"localhost", 4223}]
 
+config :logger,
+  level: :info,
+  backends: [:console],
+  default_formatter: {BotArmyRuntime.LoggerFormatter, []}
+
 config :logger, :console,
-  format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
-
-env_config = Path.join(__DIR__, "#{config_env()}.exs")
-
-if File.exists?(env_config) do
-  import_config "#{config_env()}.exs"
-end
+  format: {BotArmyRuntime.LoggerFormatter, []},
+  metadata: [:correlation_id]

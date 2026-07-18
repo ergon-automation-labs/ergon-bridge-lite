@@ -25,7 +25,7 @@ defmodule BotArmyBridgeLite.PulsePublisher do
 
   @impl true
   def handle_info(:pulse, state) do
-    BotArmyRuntime.SynapseHealth.publish(%{
+    BotArmyLibraryRuntime.SynapseHealth.publish(%{
       source: "bot_army_bridge_lite",
       service: "bridge_lite",
       health_signal: "nominal",

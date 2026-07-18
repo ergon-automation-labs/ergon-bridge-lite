@@ -12,9 +12,9 @@ defmodule BotArmyBridgeLite.BridgeConsumer do
   require Logger
 
   alias BotArmyBridgeLite.Envelope
-  alias BotArmyRuntime.NATS.Connection
-  alias BotArmyRuntime.NATS.Publisher
-  alias BotArmyRuntime.NATS.Reply
+  alias BotArmyLibraryRuntime.NATS.Connection
+  alias BotArmyLibraryRuntime.NATS.Publisher
+  alias BotArmyLibraryRuntime.NATS.Reply
 
   @reconnect_delay_ms 5_000
   @request_timeout 5_000

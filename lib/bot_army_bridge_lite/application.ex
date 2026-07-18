@@ -30,7 +30,7 @@ defmodule BotArmyBridgeLite.Application do
     if Application.get_env(:bot_army_library_runtime, :pack_mode, false),
       do: [],
       else: [
-        {BotArmyRuntime.Health.Responder,
+        {BotArmyLibraryRuntime.Health.Responder,
          [
            bot_name: :bridge_lite,
            version: @version,

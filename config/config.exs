@@ -23,5 +23,5 @@ config :logger,
   backends: [:console]
 
 config :logger, :console,
-  format: {BotArmyRuntime.LoggerFormatter, []},
+  format: "[$time] [$level] $message\n",
   metadata: [:correlation_id]

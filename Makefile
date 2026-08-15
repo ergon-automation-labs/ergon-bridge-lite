@@ -8,7 +8,7 @@ help: ## Show this help
 build: ## Compile the project
 	mix deps.get && mix compile
 
-compile: ## Alias for build, used by the shared push pipeline (common.mk)
+_compile-impl: ## Actual compile (wrapper in common.mk handles caching)
 	mix compile
 
 test: ## Run unit tests (excludes integration)

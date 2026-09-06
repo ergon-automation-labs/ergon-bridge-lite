@@ -10,6 +10,7 @@ defmodule BotArmyBridgeLite.MixProject do
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      default_release: :bridge_lite_bot,
       releases: [
         # Release name must match the starter's compose convention <short>_bot
         # (service bridge_lite_bot runs `mix release ${BOT_NAME}`). Kept

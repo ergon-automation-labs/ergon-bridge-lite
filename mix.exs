@@ -1,7 +1,7 @@
 defmodule BotArmyBridgeLite.MixProject do
   use Mix.Project
 
-  @version "0.1.4"
+  @version "0.1.5"
 
   def project do
     [
@@ -11,6 +11,16 @@ defmodule BotArmyBridgeLite.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       releases: [
+        # Release name must match the starter's compose convention <short>_bot
+        # (service bridge_lite_bot runs `mix release ${BOT_NAME}`). Kept
+        # :bridge_lite as an alias so existing invocations keep working.
+        bridge_lite_bot: [
+          applications: [
+            bot_army_library_runtime: :permanent,
+            bot_army_bridge_lite: :permanent
+          ],
+          validate_compile_env: false
+        ],
         bridge_lite: [
           applications: [
             bot_army_library_runtime: :permanent,

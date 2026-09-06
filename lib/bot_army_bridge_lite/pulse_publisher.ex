@@ -11,7 +11,6 @@ defmodule BotArmyBridgeLite.PulsePublisher do
   require Logger
 
   @pulse_interval_ms 30_000
-  @version Mix.Project.config()[:version]
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -25,13 +24,17 @@ defmodule BotArmyBridgeLite.PulsePublisher do
 
   @impl true
   def handle_info(:pulse, state) do
-    BotArmyLibraryRuntime.SynapseHealth.publish(%{
+    # P10 (2026-09-06, Docker fleet test): SynapseHealth.publish/1 only accepts a
+    # keyword list (publish(opts) when is_list(opts)) — passing a map crashed
+    # this GenServer with a FunctionClauseError every 30s (crash-restart loop,
+    # ~2 800 errors/day). Call the documented API. :version is not part of the
+    # SynapseHealth payload schema — dropped.
+    BotArmyLibraryRuntime.SynapseHealth.publish(
       source: "bot_army_bridge_lite",
       service: "bridge_lite",
       health_signal: "nominal",
-      version: @version,
       uptime_seconds: System.monotonic_time(:second) - state.started_at
-    })
+    )
 
     schedule_pulse()
     {:noreply, state}

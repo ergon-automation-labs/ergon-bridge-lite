@@ -12,6 +12,7 @@ defmodule BotArmyBridgeLite.BridgeConsumer do
   require Logger
 
   alias BotArmyBridgeLite.Envelope
+  alias BotArmyBridgeLite.LogSearch
   alias BotArmyLibraryRuntime.NATS.Connection
   alias BotArmyLibraryRuntime.NATS.Publisher
   alias BotArmyLibraryRuntime.NATS.Reply
@@ -29,7 +30,8 @@ defmodule BotArmyBridgeLite.BridgeConsumer do
     "bridge.project.create",
     "bridge.project.list",
     "bridge.project.update",
-    "bridge.world.snapshot"
+    "bridge.world.snapshot",
+    "bridge.logs.search"
   ]
 
   def start_link(opts \\ []) do
@@ -335,6 +337,26 @@ defmodule BotArmyBridgeLite.BridgeConsumer do
 
       {:error, _} ->
         reply(msg, Reply.error("invalid JSON", :validation_error))
+    end
+  end
+
+  # Fleet log search (sre LogWatcher contract — see LogSearch moduledoc).
+  # Served locally from the mounted fleet logs root; bare payloads accepted
+  # (params default to empty map). Never forwards downstream.
+  defp handle_bridge_request(%{topic: "bridge.logs.search"} = msg) do
+    params =
+      case decode_json(msg.body) do
+        {:ok, p} -> p
+        _ -> %{}
+      end
+
+    case LogSearch.search(params) do
+      %{"ok" => true} = reply ->
+        Logger.debug("[BridgeLite] log search: #{inspect(params)} → #{length(get_in(reply, ["data", "matches"]) || [])} matches")
+        reply(msg, reply)
+
+      %{"ok" => false, "error" => err} ->
+        reply(msg, Reply.error(err, :validation_error))
     end
   end
 

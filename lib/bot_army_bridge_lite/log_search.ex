@@ -54,21 +54,31 @@ defmodule BotArmyBridgeLite.LogSearch do
 
   defp error_reply(msg), do: %{"ok" => false, "error" => msg}
 
-  # ── File resolution (basename + containment under the fleet root) ──
+  # ── File resolution ──
 
+  # The LogWatcher's paths are per-bot absolute paths inside ITS container
+  # (/var/log/bot_army/<bot>.log); the fleet root nests one directory per
+  # bot (./data/logs/<bot>/<bot>.log mounted at /var/log/fleet). Resolve
+  # by basename under the root — flat (<root>/<base>) or nested
+  # (<root>/<dir>/<base>) — missing files skipped. Containment is
+  # inherent: the basename never escapes the root.
   defp resolve_path(file) when is_binary(file) do
     root = resolved_root()
     base = Path.basename(String.trim(file))
 
-    cond do
-      base == "" or base in [".", ".."] ->
-        :error
+    if base == "" or base in [".", ".."] do
+      :error
+    else
+      candidates =
+        Enum.uniq([
+          Path.join(root, base)
+          | Path.wildcard(Path.join([root, "*", base]))
+        ])
 
-      true ->
-        path = Path.join(root, base)
-        if String.starts_with?(Path.expand(path), Path.expand(resolved_root()) <> "/"),
-          do: {:ok, path},
-          else: :error
+      case Enum.find(candidates, &File.regular?/1) do
+        nil -> :error
+        path -> {:ok, path}
+      end
     end
   end
 

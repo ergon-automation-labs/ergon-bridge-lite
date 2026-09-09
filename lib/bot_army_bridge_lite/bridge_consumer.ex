@@ -352,8 +352,11 @@ defmodule BotArmyBridgeLite.BridgeConsumer do
 
     case LogSearch.search(params) do
       %{"ok" => true} = reply ->
-        Logger.debug("[BridgeLite] log search: #{inspect(params)} → #{length(get_in(reply, ["data", "matches"]) || [])} matches")
-        reply(msg, reply)
+        matches = get_in(reply, ["data", "matches"]) || []
+        Logger.debug("[BridgeLite] log search → #{length(matches)} matches")
+        # reply/2 sends the body as-is (Connection's pub clause wants a
+        # binary) — encode the map. Reply.error/2 already returns a string.
+        reply(msg, Jason.encode!(reply))
 
       %{"ok" => false, "error" => err} ->
         reply(msg, Reply.error(err, :validation_error))

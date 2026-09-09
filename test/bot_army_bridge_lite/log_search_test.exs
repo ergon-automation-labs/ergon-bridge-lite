@@ -107,6 +107,20 @@ defmodule BotArmyBridgeLite.LogSearchTest do
       assert paths == ["/var/log/bot_army/real.log"]
     end
 
+    test "nested fleet layout: per-bot dir under the root resolves too", %{root: root} do
+      File.mkdir_p!(Path.join(root, "sre_bot"))
+      File.write!(Path.join([root, "sre_bot", "sre_bot.log"]), "nested error here\n")
+
+      reply =
+        LogSearch.search(%{
+          "query" => "error",
+          "limit" => 10,
+          "files" => ["/var/log/bot_army/sre_bot.log"]
+        })
+
+      assert [%{"line_number" => 1, "line" => "nested error here"}] = reply["data"]["matches"]
+    end
+
     test "errors: empty query, empty files, non-map params" do
       assert %{"ok" => false} = LogSearch.search(%{"query" => "", "files" => ["/x.log"]})
       assert %{"ok" => false} = LogSearch.search(%{"query" => "error", "files" => []})

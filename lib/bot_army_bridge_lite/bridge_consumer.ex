@@ -519,7 +519,14 @@ defmodule BotArmyBridgeLite.BridgeConsumer do
 
   defp reply(msg, body) do
     if msg.reply_to do
-      Gnat.pub(Connection, msg.reply_to, body)
+      # Gnat.pub wants the RAW Gnat conn PID — not the Connection GenServer
+      # name (Connection has no {:pub, ...} handle_call clause; passing the
+      # name raised FunctionClauseError on every reply — found 2026-09-09
+      # when bridge.logs.search became the first subject to exercise it).
+      case GenServer.call(Connection, :get_connection) do
+        {:ok, conn} -> Gnat.pub(conn, msg.reply_to, body)
+        {:error, reason} -> Logger.warning("[BridgeLite] no NATS conn for reply: #{inspect(reason)}")
+      end
     end
   end
 

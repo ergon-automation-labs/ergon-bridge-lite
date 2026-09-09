@@ -1,12 +1,10 @@
 defmodule BotArmyBridgeLite.MixProject do
   use Mix.Project
 
-  @version "0.1.8"
-
   def project do
     [
       app: :bot_army_bridge_lite,
-      version: @version,
+      version: "0.1.8",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),

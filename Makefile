@@ -50,6 +50,7 @@ publish-release: release ## Build, package, and publish to GitHub
 	echo "✓ Published v$$VERSION"; \
 	rm -f "$$TARBALL"
 
+	@$(MAKE) publish-deploy-event TARGET=air
 push-and-publish: ## Push then publish release asset
 	git push && $(MAKE) publish-release
 
